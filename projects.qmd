@@ -1,0 +1,12 @@
+---
+title: "Projects"
+subtitle: "Things I have built."
+toc: false
+page-layout: full
+listing:
+  contents: projects.yml
+  type: grid
+  fields: [image, title, description, categories]
+  image-height: 180px
+  categories: true
+---

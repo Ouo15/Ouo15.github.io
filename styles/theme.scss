@@ -1,0 +1,112 @@
+/*-- scss:defaults --*/
+@import url('https://fonts.googleapis.com/css2?family=Oleo+Script&family=Merriweather:wght@400;700&family=Source+Sans+3:wght@400;600&display=swap');
+
+$primary:            #06436e;
+$body-bg:            #ffffff;
+$body-color:         #1f2937;
+$link-color:         $primary;
+$navbar-bg:          #f7f7f7;
+$navbar-fg:          $primary;
+$navbar-hl:          #0a6ab0;
+$footer-bg:          #f7f7f7;
+$font-family-sans-serif: "Source Sans 3", "Source Sans Pro", system-ui, sans-serif;
+$headings-font-family:   "Merriweather", Georgia, serif;
+$headings-font-weight:   700;
+$font-size-root:     18px;
+
+/*-- scss:rules --*/
+.navbar-brand .navbar-title {
+  font-family: "Oleo Script", "Merriweather", serif;
+  font-size: 1.7rem;
+}
+.navbar .nav-link { font-weight: 600; }
+
+/* ---------- Home: hero ---------- */
+.hero {
+  background: #f7f7f7;
+  border-radius: 1rem;
+  padding: 3rem 2rem;
+  margin: 1rem 0 4rem;
+  display: flex;
+  gap: 3rem;
+  align-items: center;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.hero img {
+  width: 260px; height: 260px;
+  object-fit: cover;
+  border-radius: 50%;
+  box-shadow: 0 10px 30px rgba(0,0,0,.15);
+}
+.hero-text { max-width: 36rem; }
+.hero-text h1 { font-size: 2.4rem; margin: 0 0 1rem; border: none; }
+.hero-text p  { font-size: 1.3rem; }
+.hero-buttons {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: .8rem;
+  margin-top: 1.5rem;
+}
+.hero-buttons a {
+  text-align: center;
+  padding: .7rem 1rem;
+  border-radius: .5rem;
+  border: 2px solid $primary;
+  color: $primary;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all .2s ease;
+}
+.hero-buttons a:first-child,
+.hero-buttons a:hover { background: $primary; color: #fff; }
+
+.section-title {
+  font-family: $headings-font-family;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  font-size: 2.6rem;
+  margin: 3rem 0 .5rem;
+  border: none;
+}
+.section-subtitle {
+  text-align: center;
+  font-size: 1.25rem;
+  color: #6b7280;
+  max-width: 40rem;
+  margin: 0 auto 2rem;
+}
+
+@media (max-width: 576px) {
+  .hero { padding: 2rem 1.2rem; gap: 1.5rem; }
+  .hero img { width: 160px; height: 160px; }
+  .hero-text h1 { font-size: 1.9rem; }
+  .hero-text p { font-size: 1.1rem; }
+  .section-title { font-size: 2rem; }
+}
+
+/* ---------- Listing cards ---------- */
+.quarto-grid-item.card {
+  border: none;
+  border-radius: .8rem;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0,0,0,.08);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.quarto-grid-item.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 14px 32px rgba(0,0,0,.15);
+}
+.quarto-grid-item .card-title { font-family: $headings-font-family; }
+.listing-categories .listing-category,
+.quarto-category {
+  background: rgba($primary, .08);
+  color: $primary;
+  border: none;
+  border-radius: 999px;
+}
+
+/* ---------- CV ---------- */
+.cv-entry { margin-bottom: 1.4rem; }
+.cv-entry .cv-meta { color: #6b7280; font-size: .95rem; }

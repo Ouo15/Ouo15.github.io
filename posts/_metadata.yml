@@ -1,0 +1,6 @@
+# Options shared by every blog post
+author: "Frederic OKE-AGBO"
+freeze: auto
+title-block-banner: false
+toc: true
+citation: false

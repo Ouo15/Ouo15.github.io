@@ -1,0 +1,12 @@
+{
+  "hash": "6853b132e9db5673fb934be747efe4dc",
+  "result": {
+    "engine": "jupyter",
+    "markdown": "---\ntitle: \"Welcome to my blog\"\ndescription: \"Why I started this blog, and a small demo of what a post can contain: code, plots and math.\"\ndate: \"2026-10-17\"\ncategories: [News, Python]\nimage: thumbnail.png\njupyter: python3\n---\n\nWelcome! This is the first post on my blog, where I'll share what I learn about\nmachine learning and data science.\n\n## Math\n\nPosts can contain LaTeX. For example, the mean squared error is\n\n$$\n\\text{MSE} = \\frac{1}{n}\\sum_{i=1}^{n} \\left(y_i - \\hat{y}_i\\right)^2 .\n$$\n\n## Code and plots\n\nCode runs when the post is rendered on my machine, and the result is saved\n(\"frozen\") so GitHub only needs to publish it.\n\n::: {#cell-fig-sine .cell execution_count=1}\n``` {.python .cell-code}\nimport numpy as np\nimport matplotlib.pyplot as plt\n\nrng = np.random.default_rng(0)\nx = np.linspace(0, 2 * np.pi, 60)\ny = np.sin(x) + rng.normal(0, 0.2, x.size)\ncoef = np.polyfit(x, y, 5)\n\nfig, ax = plt.subplots(figsize=(7, 4))\nax.scatter(x, y, color=\"#9ca3af\", label=\"data\")\nax.plot(x, np.polyval(coef, x), color=\"#06436e\", lw=3, label=\"degree-5 fit\")\nax.legend(); ax.spines[[\"top\", \"right\"]].set_visible(False)\nfig.savefig(\"thumbnail.png\", dpi=100, bbox_inches=\"tight\")\nplt.show()\n```\n\n::: {.cell-output .cell-output-display}\n![A noisy sine wave with a fitted curve.](index_files/figure-html/fig-sine-output-1.png){#fig-sine width=582 height=337}\n:::\n:::\n\n\nStay tuned for more posts!\n\n",
+    "supporting": [
+      "index_files/figure-html"
+    ],
+    "filters": [],
+    "includes": {}
+  }
+}

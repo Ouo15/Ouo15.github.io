@@ -1,0 +1,427 @@
+---
+title: "Building a Mortality Improvement Model to Inform Longevity Risk"
+description: "A hands-on introduction to the Lee-Carter model in R: from historical death rates to projected mortality improvement, and what it means for annuity values and longevity risk."
+date: "2024-09-15"
+categories: [Actuarial Science, Mortality, Longevity Risk, R]
+image: thumbnail.png
+execute:
+  warning: false
+  message: false
+fig-width: 8
+fig-height: 4.5
+---
+
+When an insurer sells an annuity, or a pension plan promises an income for
+life, it takes on **longevity risk**: the risk that people live longer than
+expected. Every extra year of life is another year of payments. And because
+the same trend affects every policyholder at once, this risk does not
+diversify away as the portfolio grows.
+
+The single most important assumption behind longevity risk is **mortality
+improvement**: how fast death rates will keep falling in the future. In this
+post I build a simple but widely used mortality improvement model from
+scratch, the **Lee-Carter model**, and use it to answer three practical
+questions:
+
+1. How fast has mortality been improving, and at which ages?
+2. What improvement does the model project for the future, and how uncertain is it?
+3. How much does that matter for the value of an annuity?
+
+## The data
+
+I use England & Wales male mortality data from the
+[Human Mortality Database](https://www.mortality.org), which ships with the
+R package [StMoMo](https://cran.r-project.org/package=StMoMo) (Stochastic
+Mortality Modelling). It contains deaths $D_{x,t}$ and central exposures
+$E_{x,t}$ by single age $x$ and calendar year $t$, from 1961 to 2011.
+
+Since longevity risk is mostly about retirement ages, I focus on ages 55 to 100.
+
+```{r}
+#| label: setup
+library(StMoMo)
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+
+theme_set(theme_minimal(base_size = 13))
+blue <- "#06436e"
+
+ages  <- 55:100
+years <- 1961:2011
+
+Dxt <- EWMaleData$Dxt[as.character(ages), as.character(years)]
+Ext <- EWMaleData$Ext[as.character(ages), as.character(years)]
+mxt <- Dxt / Ext   # observed central death rates
+
+# Helper: turn an age x year matrix into a long data frame
+to_long <- function(mat, value = "value") {
+  as.data.frame(as.table(mat), stringsAsFactors = FALSE) |>
+    setNames(c("age", "year", value)) |>
+    mutate(age = as.integer(age), year = as.integer(year))
+}
+```
+
+The central death rate $m_{x,t} = D_{x,t} / E_{x,t}$ is the number of deaths
+per person-year lived. Plotting it on a log scale for a few ages shows the
+story at a glance: death rates have fallen steadily at every age, and the
+lines are roughly straight, so mortality has fallen at a fairly constant
+*percentage* rate each year.
+
+```{r}
+#| label: fig-rates
+#| fig-cap: "Observed central death rates (log scale), England & Wales males."
+to_long(mxt, "mx") |>
+  filter(age %in% c(65, 75, 85, 95)) |>
+  ggplot(aes(year, mx, colour = factor(age))) +
+  geom_line(linewidth = 1) +
+  scale_y_log10(labels = scales::label_number()) +
+  scale_colour_manual(values = c("#9ecae1", "#4292c6", "#08519c", "#08306b")) +
+  labs(x = NULL, y = "Death rate (log scale)", colour = "Age")
+```
+
+## Measuring mortality improvement
+
+Actuaries usually describe these trends as **mortality improvement rates**,
+the annual percentage fall in the death rate:
+
+$$
+MI_{x,t} = 1 - \frac{m_{x,t}}{m_{x,t-1}} .
+$$
+
+An improvement rate of 2% at age 70 means a 70-year-old this year is 2% less
+likely to die than a 70-year-old was last year.
+
+Year-to-year rates are noisy, especially at the oldest ages where there are
+few deaths, so for the heatmap I use the average annual improvement over the
+previous 5 years, $1 - (m_{x,t} / m_{x,t-5})^{1/5}$. Red means mortality
+improved, blue means it got worse.
+
+```{r}
+#| label: fig-heatmap
+#| fig-cap: "Average annual mortality improvement over the previous 5 years, by age and year. The dashed line follows the generation born in 1919."
+mi_obs <- 1 - mxt[, -1] / mxt[, -ncol(mxt)]   # annual improvement, used later
+
+yrs <- 1966:2011
+mi_5y <- 1 - (mxt[, as.character(yrs)] / mxt[, as.character(yrs - 5)])^(1/5)
+
+to_long(mi_5y, "mi") |>
+  filter(age <= 95) |>
+  mutate(mi = pmax(pmin(mi, 0.05), -0.05)) |>   # cap extremes for readability
+  ggplot(aes(year, age, fill = mi)) +
+  geom_tile() +
+  geom_abline(intercept = -1919, slope = 1, linetype = "dashed") +
+  scale_fill_gradient2(low = "#2166ac", mid = "white", high = "#b2182b",
+                       labels = scales::label_percent(), name = "Improvement") +
+  coord_cartesian(expand = FALSE) +
+  labs(x = NULL, y = "Age")
+```
+
+Two things stand out:
+
+- **Improvement accelerated** from the 1990s onwards, especially between ages
+  60 and 80: the chart gets much redder over time.
+- **The pattern runs along diagonals.** A diagonal line in an age-by-year
+  chart follows one generation as it ages. Men born after the early 1920s
+  (below the dashed line), and particularly those born around 1925–1945, have
+  enjoyed much faster improvement than earlier generations. In the UK this is
+  known as the **"golden cohort"**. The pale stripe along the dashed line
+  itself is the 1919 generation, a well-known quirk of this data linked to the
+  irregular pattern of births just after the First World War.
+
+These generational patterns are called **cohort effects**. Keep them in mind;
+we will come back to them.
+
+## The Lee-Carter model
+
+Lee and Carter (1992) proposed modelling the log death rate as
+
+$$
+\log m_{x,t} = \alpha_x + \beta_x \, \kappa_t + \varepsilon_{x,t},
+$$
+
+where
+
+- $\alpha_x$ is the average shape of mortality by age (the "age profile"),
+- $\kappa_t$ is a single **period index** that captures the overall level of
+  mortality in year $t$; it trends down as mortality improves,
+- $\beta_x$ says how strongly each age responds to changes in $\kappa_t$.
+
+The beauty of the model is that it reduces the whole age-by-year surface to
+one time series, $\kappa_t$. Forecasting mortality then becomes forecasting
+$\kappa_t$.
+
+Rather than the original least-squares fit, I use the Poisson version
+(Brouhns, Denuit and Vermunt, 2002), which assumes
+$D_{x,t} \sim \text{Poisson}(E_{x,t}\, m_{x,t})$. It gives more weight to ages
+with more data, which is what we want.
+
+```{r}
+#| label: fit
+LC <- lc(link = "log")
+LCfit <- fit(LC, data = EWMaleData, ages.fit = ages, years.fit = years,
+             verbose = FALSE)
+```
+
+```{r}
+#| label: fig-params
+#| fig-cap: "Fitted Lee-Carter parameters."
+#| fig-height: 3.5
+params <- bind_rows(
+  tibble(param = "alpha[x]", x = ages,  value = LCfit$ax),
+  tibble(param = "beta[x]",  x = ages,  value = LCfit$bx[, 1]),
+  tibble(param = "kappa[t]", x = years, value = LCfit$kt[1, ])
+)
+
+ggplot(params, aes(x, value)) +
+  geom_line(colour = blue, linewidth = 1) +
+  facet_wrap(~param, scales = "free", labeller = label_parsed) +
+  labs(x = "Age / Year", y = NULL)
+```
+
+The parameters read naturally:
+
+- $\alpha_x$ rises almost linearly with age: mortality grows roughly
+  exponentially with age (Gompertz' law).
+- $\beta_x$ is largest at younger retirement ages and falls towards zero at
+  100, so younger pensioners have benefited most from the downward trend.
+- $\kappa_t$ falls steadily, and more steeply after about 1990, matching the
+  acceleration we saw in the heatmap.
+
+## Projecting the future
+
+The standard way to project $\kappa_t$ is a **random walk with drift**:
+
+$$
+\kappa_t = \kappa_{t-1} + \delta + \xi_t, \qquad \xi_t \sim N(0, \sigma^2).
+$$
+
+The drift $\delta$ is simply the average yearly change in $\kappa_t$. This
+has a neat consequence for improvement rates. Ignoring noise, the model's
+projected improvement at age $x$ is
+
+$$
+MI_x = 1 - \frac{m_{x,t}}{m_{x,t-1}} = 1 - e^{\beta_x \delta},
+$$
+
+which is **constant over time** and depends on age only through $\beta_x$.
+
+To capture uncertainty, I simulate 1,000 future paths of $\kappa_t$ over 50
+years. Each path gives a full future mortality table.
+
+```{r}
+#| label: simulate
+h <- 50
+set.seed(2026)
+LCfor <- forecast(LCfit, h = h)              # central projection
+LCsim <- simulate(LCfit, nsim = 1000, h = h) # 1,000 stochastic scenarios
+```
+
+```{r}
+#| label: fig-fan
+#| fig-cap: "Death rates at ages 65 and 85: observed (dark), central projection and 50% / 90% intervals."
+fan_data <- function(age) {
+  a <- as.character(age)
+  sims <- LCsim$rates[a, , ]
+  tibble(
+    age  = paste("Age", age),
+    year = as.integer(colnames(LCsim$rates)),
+    q05  = apply(sims, 1, quantile, 0.05),
+    q25  = apply(sims, 1, quantile, 0.25),
+    q50  = LCfor$rates[a, ],
+    q75  = apply(sims, 1, quantile, 0.75),
+    q95  = apply(sims, 1, quantile, 0.95)
+  )
+}
+fan <- bind_rows(fan_data(65), fan_data(85))
+obs <- to_long(mxt, "mx") |>
+  filter(age %in% c(65, 85)) |>
+  mutate(age = paste("Age", age))
+
+p_fan <- ggplot(fan, aes(year)) +
+  geom_ribbon(aes(ymin = q05, ymax = q95), fill = blue, alpha = 0.15) +
+  geom_ribbon(aes(ymin = q25, ymax = q75), fill = blue, alpha = 0.30) +
+  geom_line(aes(y = q50), colour = blue, linewidth = 1, linetype = "dashed") +
+  geom_line(data = obs, aes(y = mx), colour = blue, linewidth = 1) +
+  facet_wrap(~age, scales = "free_y") +
+  scale_y_log10(labels = scales::label_number()) +
+  labs(x = NULL, y = "Death rate (log scale)")
+p_fan
+```
+
+```{r}
+#| label: thumbnail
+#| include: false
+ggsave("thumbnail.png", p_fan + theme(strip.text = element_text(size = 14)),
+       width = 7, height = 4, dpi = 100, bg = "white")
+```
+
+The fan widens over time: we are fairly confident about next year's mortality,
+much less so about mortality in 2050.
+
+### How do projected improvements compare with history?
+
+Let's compare the model's constant projected improvement rates with what was
+actually observed over the last 20 years of data.
+
+```{r}
+#| label: fig-improvement
+#| fig-cap: "Projected Lee-Carter improvement rates versus observed average improvement, 1992–2011."
+drift <- mean(diff(LCfit$kt[1, ]))
+
+improvement <- tibble(
+  age = ages,
+  `Lee-Carter projection (fit 1961–2011)` = 1 - exp(LCfit$bx[, 1] * drift),
+  `Observed average 1992–2011` = rowMeans(mi_obs[, as.character(1992:2011)])
+) |>
+  pivot_longer(-age, names_to = "source", values_to = "mi")
+
+ggplot(improvement, aes(age, mi, colour = source)) +
+  geom_line(linewidth = 1) +
+  scale_y_continuous(labels = scales::label_percent()) +
+  scale_colour_manual(values = c(blue, "#b2182b")) +
+  labs(x = "Age", y = "Annual improvement", colour = NULL) +
+  theme(legend.position = "top")
+```
+
+This is the most important chart in the post. The model projects **less**
+improvement than we observed recently, because its drift is an average over
+1961–2011, which includes the slower decades of the 1960s and 1970s.
+
+This is a judgement call, not a statistical one: **which history do we
+believe is representative of the future?** Let's see how much the answer
+depends on it by refitting the model on 1981–2011 only.
+
+```{r}
+#| label: recent-fit
+LCfit_recent <- fit(LC, data = EWMaleData, ages.fit = ages,
+                    years.fit = 1981:2011, verbose = FALSE)
+drift_recent <- mean(diff(LCfit_recent$kt[1, ]))
+mi_recent <- 1 - exp(LCfit_recent$bx[, 1] * drift_recent)
+
+tibble(
+  Age = c(65, 75, 85, 95),
+  `Fit 1961–2011` = (1 - exp(LCfit$bx[, 1] * drift))[as.character(Age)],
+  `Fit 1981–2011` = mi_recent[as.character(Age)]
+) |>
+  mutate(across(-Age, scales::label_percent(accuracy = 0.1))) |>
+  knitr::kable(align = "c")
+```
+
+Same model, same data source, and a noticeably different view of the future,
+just from the choice of calibration window.
+
+## From mortality to money: the impact on annuity values
+
+Finally, let's translate this into something an insurer cares about: the
+cost of paying a man aged 65 in 2012 an income of 1 per year, at the end of
+each year, for as long as he lives.
+
+Following him through time means walking **diagonally** through the
+projected table: age 65 in 2012, 66 in 2013, and so on. With
+$q = 1 - e^{-m}$ the probability of dying within the year, the annuity
+value at interest rate $i$ is
+
+$$
+a_{65} = \sum_{k=1}^{n} v^k \, {}_kp_{65}, \qquad
+{}_kp_{65} = \prod_{j=0}^{k-1} \left(1 - q_{65+j,\;2012+j}\right), \qquad v = \frac{1}{1+i}.
+$$
+
+For simplicity I stop at age 100 and use $i = 3\%$.
+
+```{r}
+#| label: annuity
+cohort_annuity <- function(rates, age0 = 65, year0 = 2012, i = 0.03) {
+  n  <- 100 - age0 + 1
+  m  <- sapply(0:(n - 1), function(k)
+          rates[as.character(age0 + k), as.character(year0 + k)])
+  kp <- cumprod(1 - (1 - exp(-m)))
+  c(e65 = sum(kp), a65 = sum(kp * (1 + i)^-(1:n)))
+}
+
+# 1. No improvement: 2011 death rates frozen forever
+frozen <- matrix(mxt[, "2011"], nrow = length(ages), ncol = h,
+                 dimnames = list(ages, 2012:(2011 + h)))
+no_improvement <- cohort_annuity(frozen)
+
+# 2. Lee-Carter central projection
+central <- cohort_annuity(LCfor$rates)
+
+# 3. Distribution across the 1,000 simulated scenarios
+sims <- t(sapply(1:1000, function(s) cohort_annuity(LCsim$rates[, , s])))
+a_995 <- quantile(sims[, "a65"], 0.995)
+
+tibble(
+  Scenario = c("No future improvement", "Lee-Carter central projection",
+               "Lee-Carter 99.5th percentile"),
+  `Life expectancy at 65 (to age 100)` = c(no_improvement["e65"], central["e65"],
+                                          quantile(sims[, "e65"], 0.995)),
+  `Annuity value at 3%` = c(no_improvement["a65"], central["a65"], a_995)
+) |>
+  knitr::kable(digits = 2, align = "lcc")
+```
+
+```{r}
+#| label: fig-annuity
+#| fig-cap: "Distribution of the annuity value across 1,000 simulated mortality scenarios."
+ggplot(as.data.frame(sims), aes(a65)) +
+  geom_histogram(bins = 40, fill = blue, alpha = 0.7, colour = "white") +
+  geom_vline(xintercept = no_improvement["a65"], linetype = "dotted", linewidth = 1) +
+  geom_vline(xintercept = a_995, colour = "#b2182b", linewidth = 1) +
+  annotate("text", x = no_improvement["a65"], y = Inf, vjust = 1.5, hjust = -0.05,
+           label = "No improvement") +
+  annotate("text", x = a_995, y = Inf, vjust = 1.5, hjust = 1.05,
+           label = "99.5th percentile", colour = "#b2182b") +
+  labs(x = "Annuity value (per 1 of annual income)", y = "Number of scenarios")
+```
+
+The numbers tell the longevity risk story:
+
+- **Ignoring improvement is expensive.** Allowing for projected improvement
+  raises the annuity value by about
+  `r scales::percent(central[["a65"]] / no_improvement[["a65"]] - 1, accuracy = 0.1)`
+  compared with frozen 2011 rates. Across a large annuity book, that gap is
+  enormous.
+- **Uncertainty is material too.** In the 1-in-200 scenario (the 99.5th
+  percentile, the same confidence level as Solvency II, though Solvency II
+  measures it over a one-year horizon rather than the full run-off used
+  here), the annuity is worth a further
+  `r scales::percent(a_995[[1]] / central[["a65"]] - 1, accuracy = 0.1)`
+  more than the central estimate. That margin is a rough indication of the
+  capital needed to withstand longevity risk.
+
+## Limitations and next steps
+
+Lee-Carter is a great starting point, but an actuary should know its blind
+spots before relying on it:
+
+- **Calibration window.** As we saw, the projection depends heavily on which
+  years we fit. In practice this is where expert judgement comes in.
+- **Constant improvement pattern.** Because $\beta_x$ is fixed, the model
+  assumes the *age pattern* of improvement never changes. In reality,
+  improvement has shifted towards older ages over time.
+- **No cohort effects.** The diagonal patterns in the heatmap are invisible to
+  Lee-Carter. Models such as Renshaw-Haberman or the Age-Period-Cohort model
+  add a cohort term.
+- **Understated uncertainty.** The simulations only reflect randomness in
+  future $\kappa_t$. They ignore parameter uncertainty (which can be added
+  with a bootstrap, e.g. `StMoMo::bootstrap()`) and model uncertainty, so the
+  99.5th percentile above is optimistic.
+- **The oldest ages.** Data above 90 are thin, and I stopped at age 100. A
+  real model would smooth and extrapolate rates to ages 110–120.
+
+In future posts I plan to compare Lee-Carter with the Cairns-Blake-Dowd (CBD)
+model, which was designed for pension ages, and to add cohort effects.
+
+## References
+
+- Lee, R. D., & Carter, L. R. (1992). Modeling and forecasting U.S. mortality.
+  *Journal of the American Statistical Association*, 87(419), 659–671.
+- Brouhns, N., Denuit, M., & Vermunt, J. K. (2002). A Poisson log-bilinear
+  regression approach to the construction of projected lifetables.
+  *Insurance: Mathematics and Economics*, 31(3), 373–393.
+- Villegas, A. M., Kaishev, V. K., & Millossovich, P. (2018). StMoMo: An R
+  package for stochastic mortality modeling. *Journal of Statistical Software*,
+  84(3), 1–38.
+- Human Mortality Database. University of California, Berkeley (USA), and Max
+  Planck Institute for Demographic Research (Germany). <https://www.mortality.org>

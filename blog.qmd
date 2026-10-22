@@ -1,0 +1,16 @@
+---
+title: "Blog"
+subtitle: "Tutorials, notes and experiments."
+toc: false
+page-layout: full
+listing:
+  contents: posts
+  sort: "date desc"
+  type: grid
+  categories: true
+  sort-ui: true
+  filter-ui: true
+  fields: [image, date, title, description, categories, reading-time]
+  image-height: 180px
+  feed: true
+---

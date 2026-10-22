@@ -1,0 +1,53 @@
+project:
+  type: website
+  output-dir: _site
+
+website:
+  title: "Frederic OKE-AGBO"
+  description: "Notes, tutorials and projects on machine learning and data science."
+  site-url: "https://ouo15.github.io"
+  repo-url: "https://github.com/Ouo15/Ouo15.github.io"
+  favicon: images/favicon.svg
+  open-graph: true
+  navbar:
+    title: "Frederic OKE-AGBO"
+    left:
+      - href: index.qmd
+        text: Home
+      - href: about.qmd
+        text: About
+      - href: blog.qmd
+        text: Blog
+      - href: projects.qmd
+        text: Projects
+      - href: cv.qmd
+        text: CV
+    right:
+      - icon: github
+        href: https://github.com/Ouo15
+        aria-label: GitHub
+      - icon: linkedin
+        href: https://www.linkedin.com/in/frederic-oke-agbo-ms-mph-asa-289ba434
+        aria-label: LinkedIn
+      - icon: envelope
+        href: "mailto:fredook15@gmail.com"
+        aria-label: Email
+      - icon: rss
+        href: blog.xml
+        aria-label: RSS feed
+  page-footer:
+    left: "© 2026 Frederic OKE-AGBO"
+    right: "Built with [Quarto](https://quarto.org)"
+
+format:
+  html:
+    theme:
+      light: [cosmo, styles/theme.scss]
+      dark: [cosmo, styles/theme.scss, styles/theme-dark.scss]
+    toc: true
+    code-copy: true
+    highlight-style: github
+    html-math-method: katex
+
+execute:
+  freeze: auto

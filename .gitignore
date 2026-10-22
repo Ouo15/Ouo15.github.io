@@ -1,0 +1,8 @@
+/.quarto/
+/_site/
+**/*.quarto_ipynb
+__pycache__/
+.ipynb_checkpoints/
+
+# Private: contains LinkedIn analytics and other people's profiles
+/files/linkedIn.pdf

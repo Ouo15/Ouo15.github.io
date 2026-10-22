@@ -1,0 +1,128 @@
+---
+title: "Curriculum Vitae"
+subtitle: "Actuary · Biometric Risk Modeling · Experience Analysis"
+toc: true
+---
+
+[Download PDF](files/cv.pdf){.btn .btn-primary}
+
+Associate of the Society of Actuaries (ASA) with 5+ years of experience in
+mortality experience studies, assumption development and biometric risk
+modeling within Life & Health reinsurance. I translate complex experience data
+into actionable insights for pricing, valuation and in-force portfolio
+management across North American life insurance markets, blending classical
+actuarial methods with predictive modeling and an epidemiological perspective.
+
+## Experience
+
+::: {.cv-entry}
+**Associate Actuary, Biometric Risks & Experience Analysis** · SCOR  
+[United States · May 2024 – present (Senior Actuarial Analyst, Nov 2021 – May 2024)]{.cv-meta}
+
+- Collaborated with a multidisciplinary global team to develop mortality trend
+  assumptions for longevity and protection business, incorporating future
+  morbidity drivers for pricing and valuation of in-force blocks.
+- Led the estimation of Economic Capital for Post-Level Term (PLT) life
+  products, focusing on excess lapse and mortality risk through predictive modeling.
+- Built a model quantifying mortality trends from delayed cancer screenings due
+  to COVID-19 impacts on the U.S. healthcare system.
+- Developed a predictive mortality trend model using an embedded risk factors
+  approach, supporting forward-looking assumption setting.
+- Led the development of policyholder behavior assumptions (lapse and
+  conversion) with predictive modeling, improving assumption accuracy by 15%.
+- Directed the implementation of lapse and mortality improvement assumptions
+  into valuation and pricing models.
+- Accelerated assumption validation by automating data preprocessing and model
+  calibration with R Shiny tools.
+- Enriched mortality risk analysis by integrating public data via APIs, and
+  applied machine learning to quantify the value of new data points.
+:::
+
+::: {.cv-entry}
+**Actuarial Associate, Models & Data Steward** · American Equity Investment Life Insurance  
+[West Des Moines, IA · Sep 2020 – Nov 2021]{.cv-meta}
+
+- Designed SQL-based data pipelines to support actuarial modeling and improve
+  data accuracy and accessibility.
+- Developed experience-based policyholder behavior assumption models supporting
+  model validation and pricing.
+- Built predictive models for partial withdrawals and lifetime income rider
+  utilization using statistical and machine learning techniques in R.
+- Conducted model testing and validation in line with actuarial standards.
+:::
+
+::: {.cv-entry}
+**Graduate Teaching Assistant** · University of Iowa  
+[Iowa City, IA · Aug 2018 – Sep 2020]{.cv-meta}
+
+- Prepared lessons, summarized key learning points and provided academic support.
+- Taught students to apply statistical concepts to real-world business problems.
+:::
+
+::: {.cv-entry}
+**Public Health Analyst** · Ministry of Health, Benin  
+[Cotonou, Benin · Feb 2011 – Aug 2017]{.cv-meta}
+
+- Designed and analyzed a cohort study tracking the effectiveness of
+  Long-Lasting Insecticidal Nets (LLINs) against malaria.
+- Used survival, logistic and Poisson regression to estimate net lifespan and
+  identify factors associated with loss of physical and chemical integrity.
+- Modeled a multi-design study on the impact of mosquito resistance to
+  pyrethroids using generalized linear mixed models.
+- Wrote statistical reports and contributed to manuscripts for publication.
+:::
+
+## Education
+
+::: {.cv-entry}
+**M.S., Actuarial Science** · University of Iowa  
+[Iowa City, IA · 2018 – 2020]{.cv-meta}
+:::
+
+::: {.cv-entry}
+**M.P.H. (with Distinction), Public Health Methodology** · Université libre de Bruxelles  
+[Brussels, Belgium · 2014 – 2015]{.cv-meta}
+:::
+
+::: {.cv-entry}
+**B.S., Mathematics & Statistics** · Université d'Abomey-Calavi  
+[Benin]{.cv-meta}
+:::
+
+## Skills
+
+- **Mortality & morbidity research:** biometric risk modeling, mortality trend analysis
+- **Experience studies & assumptions:** data-driven assumption setting for pricing and valuation
+- **Modeling:** GLM, GAM, survival models, time series, ensembles (boosting, random forest), decision trees, PCA
+- **ML & predictive analytics:** risk investigation, quantification and scoring
+- **Tools:** R, Python, SQL, R Shiny, Azure Databricks, Azure DevOps
+- **Languages:** English, French (fluent)
+
+## Credentials & certifications
+
+- **Associate of the Society of Actuaries (ASA)**, Society of Actuaries
+- **Machine Learning Specialization** and **Deep Learning** courses (Neural Networks;
+  Improving Deep Neural Networks; Structuring ML Projects), DeepLearning.AI, 2024
+- **Claude Code 101**, Anthropic, 2026
+- **Introduction to LangChain (Python)**, LangChain
+- **Creating Advanced AI Applications with Python, APIs, and GitHub Models**, LinkedIn, 2025
+- **Python for Financial Analysis and Algorithmic Trading**, Udemy
+
+## Awards
+
+- **Robert H. Taylor-Knowler Award** (Apr 2020), for
+  outstanding achievement in Life Contingencies
+
+## Volunteering
+
+::: {.cv-entry}
+**Member, Medical Reserve Corps** · DeKalb Department of Public Health  
+[Georgia, USA · Dec 2015 – present]{.cv-meta}
+
+Trained in incident preparedness and management to support the local community
+during disasters.
+:::
+
+## Contact
+
+[GitHub](https://github.com/Ouo15) · [LinkedIn](https://www.linkedin.com/in/frederic-oke-agbo-ms-mph-asa-289ba434) · [Email](mailto:fredook15@gmail.com)

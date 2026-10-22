@@ -1,0 +1,470 @@
+---
+title: "GLP-1 Drugs and Insurance Portfolios: Evidence and Projected Impact in the US, Canada and the UK"
+description: "How GLP-1 drugs evolved from a diabetes treatment into a potential driver of mortality improvement, what the evidence shows so far, and what reinsurers project for protection and longevity business."
+date: "2026-10-01"
+categories: [Insurance, Mortality, Longevity Risk, GLP-1]
+image: thumbnail.png
+execute:
+  warning: false
+  message: false
+  echo: false
+fig-width: 8
+fig-height: 4.5
+---
+
+::: {.callout-note appearance="simple"}
+**Note.** This post reflects publicly available information as of October 2026
+and my personal views, not those of my employer. It is not medical advice.
+:::
+
+Few medical developments have caught the attention of life actuaries as
+quickly as GLP-1 drugs. Obesity is linked to seven of the ten leading causes
+of death in high-income countries
+([Swiss Re](https://www.swissre.com/press-release/GLP-1-drugs-may-reduce-mortality-by-up-to-6-4-in-the-US-by-2045/3f8ec083-2b76-4eea-88cb-e5af644e045d)),
+so a class of drugs that reliably produces 15–20% weight loss could move
+population mortality, and with it the experience of every life insurance and
+annuity portfolio.
+
+The impact is not symmetric. Lower mortality is **good news for protection
+business** (term life, critical illness) but **a cost for longevity business**
+(annuities, pensions, pension risk transfer). In this post I look at:
+
+1. how GLP-1 drugs evolved,
+2. what the evidence shows so far, and where it is still weak,
+3. what reinsurers project for the US, Canada and the UK, and
+4. what this could mean, in numbers, for protection and longevity products.
+
+## How GLP-1 drugs evolved
+
+GLP-1 (glucagon-like peptide-1) is a gut hormone released after eating. It
+stimulates insulin, slows stomach emptying and signals fullness to the brain.
+The challenge was turning it into a drug: natural GLP-1 is cleared from the
+body within minutes
+([Lasker Foundation / JCI](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11446598/)).
+
+| Period | Milestone |
+|---|---|
+| **1980s** | GLP-1 identified by Joel Habener's group and Svetlana Mojsov; Lotte Bjerre Knudsen at Novo Nordisk later leads the work on long-acting versions. The three received the 2024 Lasker Award ([JCI](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC11446598/)). |
+| **2005** | Exenatide, based on a peptide found in Gila monster venom, becomes the first GLP-1 drug approved for type 2 diabetes. |
+| **2010–2014** | Liraglutide: daily injection for diabetes (Victoza), then for obesity (Saxenda). |
+| **2017–2021** | Semaglutide: weekly injection for diabetes (Ozempic, 2017), then for obesity (Wegovy, 2021). |
+| **2022–2023** | Tirzepatide, a dual GIP/GLP-1 agonist: Mounjaro (diabetes), Zepbound (obesity). **SELECT** shows a 20% cut in major cardiovascular events. |
+| **2025** | Oral semaglutide for obesity (Wegovy pill) approved in the US in December; Swiss Re and RGA publish mortality projections. |
+| **2026** | Canada approves the first generic semaglutide (April); Lilly's oral orforglipron (Foundayo) approved in the US (April); Medicare starts covering obesity drugs (July); triple-agonist retatrutide delivers up to 28% weight loss in phase 3. |
+
+Each generation of injectable drugs has delivered more weight loss. The new
+pills trade some of that efficacy for convenience: no injections, and (for
+orforglipron) no food or water restrictions.
+
+```{r}
+#| label: fig-weight
+#| fig-cap: "Mean weight loss in the drug arm of key phase 3 obesity trials (highest dose). Trials differ in population, duration and statistical method, so this is not a head-to-head comparison."
+library(ggplot2)
+library(dplyr)
+theme_set(theme_minimal(base_size = 13))
+blue <- "#06436e"
+
+trials <- tribble(
+  ~drug,                           ~trial,                 ~loss, ~form,
+  "Liraglutide 3.0 mg",            "SCALE, 56 wk",           8.0, "Injection",
+  "Orforglipron 36 mg",            "ATTAIN-1, 72 wk",       11.2, "Pill",
+  "Oral semaglutide 25 mg",        "OASIS 4, 64 wk",        13.6, "Pill",
+  "Semaglutide 2.4 mg",            "STEP 1, 68 wk",         14.9, "Injection",
+  "Tirzepatide 15 mg",             "SURMOUNT-1, 72 wk",     20.9, "Injection",
+  "Retatrutide 12 mg (not yet approved)", "TRIUMPH-1, 80 wk",      28.3, "Injection"
+) |>
+  mutate(label = paste0(drug, "\n", trial),
+         label = factor(label, levels = label[order(loss)]))
+
+ggplot(trials, aes(loss, label, fill = form)) +
+  geom_col(width = 0.65) +
+  geom_text(aes(label = sprintf("%.1f%%", loss)), hjust = -0.15, size = 4) +
+  scale_fill_manual(values = c(Injection = blue, Pill = "#6cb6ec")) +
+  scale_x_continuous(limits = c(0, 32), labels = function(x) paste0(x, "%")) +
+  labs(x = "Mean body-weight reduction", y = NULL, fill = NULL) +
+  theme(legend.position = "top", panel.grid.major.y = element_blank())
+```
+
+Sources: SCALE, STEP 1, SURMOUNT-1 and OASIS 4 (published trial results);
+ATTAIN-1 ([ACC summary of NEJM paper](https://www.acc.org/latest-in-cardiology/journal-scans/2025/09/24/16/48/attain-1));
+TRIUMPH-1 ([Lilly](https://investor.lilly.com/news-releases/news-release-details/lillys-triple-agonist-retatrutide-successful-two-additional),
+[Pharmacy Times](https://www.pharmacytimes.com/view/retatrutide-delivers-bariatric-level-weight-loss-pivotal-phase-3-triumph-1-trial)).
+
+## The evidence so far
+
+For an actuary, weight loss is only a proxy. What matters is whether people
+**die less**, and whether the effect **lasts in the real world**. The evidence
+comes in three layers.
+
+### 1. Randomised trials with hard outcomes
+
+| Trial | Population | Key result |
+|---|---|---|
+| **SELECT** (semaglutide, 2023) | 17,604 adults with overweight/obesity and established cardiovascular disease, **no diabetes**, ~40 months | Major cardiovascular events 6.5% vs 8.0%: a **20% relative reduction**. All-cause death HR 0.81 (secondary endpoint) (Lincoff et al., NEJM 2023; [Cleveland Clinic](https://newsroom.clevelandclinic.org/2023/11/11/international-clinical-trial-finds-that-semaglutide-reduced-cardiovascular-events-by-20-in-adults-with-overweight-or-obesity-who-dont-have-diabetes/)) |
+| **FLOW** (semaglutide, 2024) | 3,533 adults with type 2 diabetes and chronic kidney disease | Kidney outcomes HR 0.76; **all-cause death HR 0.80** (13% vs 16%); stopped early for efficacy ([ACC](https://www.acc.org/latest-in-cardiology/clinical-trials/2024/05/29/17/23/flow)) |
+| **SURPASS-CVOT** (tirzepatide vs dulaglutide, 2025) | Adults with type 2 diabetes and cardiovascular disease | Cardiovascular events HR 0.92 vs an *active* GLP-1 comparator (non-inferior); lower all-cause death ([Healio](https://www.healio.com/news/endocrinology/20250919/tirzepatide-similar-to-dulaglutide-for-cv-outcomes-but-tied-to-lower-rates-of-death)) |
+
+These are the strongest pieces of evidence: a 20% reduction in all-cause
+mortality, in two independent trials, in high-risk groups.
+
+There are also clear **negative results**. In November 2025, the EVOKE trials
+found that oral semaglutide did **not** slow Alzheimer's disease progression
+([Alzheimer Europe](https://www.alzheimer-europe.org/news/results-evoke-and-evoke-trials-show-no-effect-oral-semaglutide-ad-progression)).
+GLP-1s are not a cure-all, and benefits outside cardiometabolic disease
+should not be assumed.
+
+### 2. Real-world insured data
+
+Munich Re analysed a US dataset of **41 million lives** with prescription and
+mortality data from 2015 to January 2025
+([Munich Re, February 2026](https://www.munichre.com/us-life/en/insights/clinical-knowledge/glp-1-therapies-and-mortality-risk-implications-for-life-insurers.html)):
+
+- GLP-1 users had lower all-cause mortality than non-users, both **with and
+  without diabetes**, with similar reductions in each group.
+- The benefit was consistent under age 60 and **less pronounced above 60**.
+- It held across income bands, including the moderate-to-affluent incomes
+  typical of insured populations.
+- Munich Re estimates GLP-1s may drive **0.2%–0.5% additional mortality
+  improvement per year, over 20 years**.
+
+### 3. Population-level signals
+
+In the US, the share of adults currently taking a GLP-1 for weight loss rose
+from **3% in 2024 to 11% in 2026**, and the adult obesity rate fell from a
+peak of **39.9% in 2022 to 36.8% in 2026**
+([Gallup](https://news.gallup.com/poll/712157/glp-usage-reaches-new-high.aspx)).
+Gallup does not claim causation, but this is the first sustained fall in US
+obesity in decades.
+
+### The weak spot: persistence
+
+The biggest uncertainty is not whether the drugs work, but whether people
+**stay on them**:
+
+- A meta-analysis of about 446,000 patients found **48.7% stop within one
+  year**, with higher rates in people without diabetes
+  ([Diabetes, Obesity and Metabolism, 2025](https://www.epocrates.com/online/contextuallink/article/higher-discontinuation-rates-of-glp-1-receptor-agonists-in-non-diabetic)).
+- Only **1 in 12** people starting a GLP-1 for obesity (without diabetes) was
+  still on it after three years
+  ([Prime Therapeutics](https://www.biospace.com/press-releases/prime-therapeutics-leading-research-shows-only-1-in-12-remain-on-a-glp-1-drug-for-obesity-at-three-years)).
+- In Munich Re's data, fewer than **30%** of non-diabetic users aged 30–40
+  stayed on the drug beyond a year.
+- Stopping usually means **regaining weight**: one year after stopping
+  semaglutide in STEP 1, participants had regained about **two-thirds** of the
+  weight they lost, and their cardiometabolic improvements reverted similarly
+  ([STEP 1 extension](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9542252/)).
+
+Persistence has improved as shortages eased and prices fell, and pills may
+help further. But it remains the key assumption in every projection below.
+
+## Projected impact: what reinsurers expect
+
+Three major reinsurers have published quantitative projections:
+
+| Study | Market | Impact on all-cause mortality by ~2045 |
+|---|---|---|
+| **Swiss Re** (Sept 2025) | US | 2.3% (pessimistic) to **6.4%** (optimistic) |
+| | UK | 1.8% to **5.1%** |
+| **RGA** (Nov 2025) | US | 1.0% / **3.5%** / 8.8% (pessimistic / central / optimistic) |
+| | Canada | **2.6%** (central) |
+| | UK | **2.0%** (central) |
+| **Munich Re** (Feb 2026) | US | 0.2%–0.5% extra improvement **per year** for 20 years, roughly **4%–10%** cumulative (my conversion) |
+
+Sources: [Swiss Re](https://www.swissre.com/press-release/GLP-1-drugs-may-reduce-mortality-by-up-to-6-4-in-the-US-by-2045/3f8ec083-2b76-4eea-88cb-e5af644e045d) and
+[Reinsurance News](https://www.reinsurancene.ws/glp-1-drugs-could-cut-mortality-rates-in-us-and-uk-swiss-re-says/);
+[RGA](https://www.rgare.com/knowledge-center/article/rga-glp-1-study--weighing-the-evidence);
+[Munich Re](https://www.munichre.com/us-life/en/insights/clinical-knowledge/glp-1-therapies-and-mortality-risk-implications-for-life-insurers.html).
+
+```{r}
+#| label: fig-projections
+#| fig-cap: "Projected reduction in population all-cause mortality by about 2045. Bars show each study's range; dots show central scenarios where published. Munich Re's range is converted from its annual figures."
+proj <- tribble(
+  ~study,      ~market,  ~low, ~central, ~high,
+  "Swiss Re",  "US",      2.3,  NA,       6.4,
+  "Swiss Re",  "UK",      1.8,  NA,       5.1,
+  "RGA",       "US",      1.0,  3.5,      8.8,
+  "RGA",       "Canada",  NA,   2.6,      NA,
+  "RGA",       "UK",      NA,   2.0,      NA,
+  "Munich Re", "US",      100 * (1 - 0.998^20), NA, 100 * (1 - 0.995^20)
+) |>
+  mutate(label = factor(paste(study, "·", market),
+                        levels = rev(paste(study, "·", market))))
+
+p_proj <- ggplot(proj, aes(y = label)) +
+  geom_linerange(aes(xmin = low, xmax = high), linewidth = 6,
+                 colour = blue, alpha = 0.35, na.rm = TRUE) +
+  geom_point(aes(x = central), size = 4, colour = blue, na.rm = TRUE) +
+  geom_text(aes(x = central, label = sprintf("%.1f%%", central)), vjust = -1.2,
+            size = 3.6, na.rm = TRUE) +
+  scale_x_continuous(limits = c(0, 10.5), labels = function(x) paste0(x, "%")) +
+  labs(x = "Reduction in all-cause mortality by ~2045", y = NULL) +
+  theme(panel.grid.major.y = element_blank())
+p_proj
+```
+
+```{r}
+#| label: thumbnail
+#| include: false
+ggsave("thumbnail.png", p_proj, width = 7, height = 4, dpi = 100, bg = "white")
+```
+
+Why do the numbers differ? Each model combines the same four ingredients, and
+small changes in any of them compound:
+
+- **Uptake:** how many people with obesity take the drugs.
+- **Effectiveness:** how much weight they lose, and how much mortality falls
+  per unit of weight lost (or beyond it, as SELECT suggests).
+- **Persistence and rebound:** how long they stay on treatment, and how much
+  of the benefit is lost when they stop.
+- **Time to effect:** cardiovascular benefits appear within a few years;
+  cancer benefits, if any, take much longer.
+
+Three findings recur across the studies:
+
+- **The effect is largest in middle age.** RGA finds the biggest reductions at
+  ages 45–59 and the smallest at 85+, where uptake is lower and fewer deaths
+  are cardiovascular. Munich Re sees the same pattern either side of age 60.
+- **Insured lives benefit less than the general population.** They have a lower
+  average BMI, so there is less room for improvement, which outweighs their
+  better access to drugs (RGA).
+- **Morbidity effects are smaller than mortality effects.** Cancer is the
+  largest cause of critical illness claims, and BMI reduction lowers cancer
+  risk less than it lowers cardiovascular risk (RGA).
+
+## Market by market
+
+### United States
+
+The US has the highest obesity rate (around 40% of adults) and the fastest
+uptake, and access is widening quickly:
+
+- **Price and coverage.** In November 2025, the administration agreed lower
+  prices with Lilly and Novo Nordisk, including direct-to-consumer sales
+  through TrumpRx ([CNBC](https://www.cnbc.com/2025/11/06/trump-eli-lilly-novo-nordisk-deal-obesity-drug-prices.html)).
+  Since **1 July 2026**, eligible Medicare beneficiaries can get obesity
+  GLP-1s for a **$50 monthly copay** under a temporary "Bridge" program
+  ([CNBC](https://www.cnbc.com/2026/06/30/medicare-obesity-drug-glp-1-coverage-starting-july-1.html)),
+  ahead of the CMS **BALANCE** model in Part D from January 2027
+  ([KFF](https://www.kff.org/medicaid/medicaid-coverage-of-and-spending-on-glp-1s/)).
+- **Pills.** The Wegovy pill launched in January 2026, and Lilly's Foundayo
+  (orforglipron) was approved on 1 April 2026; it needs no injection and has
+  no food or water restrictions
+  ([BioSpace](https://www.biospace.com/fda/eli-lillys-oral-obesity-pill-approved-kicking-off-renewed-novo-rivalry)).
+
+**Protection:** a meaningful tailwind for term life, especially in the
+45–59 age band where face amounts are high. Medicare coverage matters less
+for protection than for longevity, since it targets people aged 65+.
+
+**Longevity:** cheaper access for over-65s via Medicare increases the
+relevance for annuities and pension risk transfer, although the effect at the
+oldest ages is expected to be smallest.
+
+### Canada
+
+Canada is the **first G7 country with generic semaglutide**. Novo Nordisk did
+not maintain its Canadian patent, and Health Canada approved the first generic
+in April 2026
+([Health Canada](https://www.canada.ca/en/health-canada/news/2026/04/canada-becomes-the-first-g7-country-to-approve-a-generic-version-of-semaglutide.html)),
+followed by the first generic for weight management (Apotex's Sevmia) in June
+([Health Canada](https://www.canada.ca/en/health-canada/news/2026/06/canada-approves-first-generic-semaglutide-for-weight-loss.html))
+and further approvals since, including Sandoz in September
+([Pearce IP](https://www.pearceip.law/2026/09/18/sandozs-generic-ozempic-semaglutide-approved-in-canada/)).
+
+- RGA's central projection for Canada is a **2.6%** mortality reduction by
+  2045, between the US and UK.
+- Generic prices could push uptake towards the **optimistic** end of the
+  range, making Canada a natural experiment for the whole industry.
+- Munich Re's Canadian team expects underwriting to improve and
+  **insurability to expand**: more applicants qualifying for standard or
+  preferred rates
+  ([Digital Insurance](https://www.dig-in.com/news/munich-re-how-glp-1-and-ai-impact-life-insurance)).
+- For **group benefits**, wider use of cheaper generics shifts the cost
+  pressure on drug plans.
+
+### United Kingdom
+
+In the UK, **private** use runs well ahead of the NHS:
+
+- NHS England is rolling out Mounjaro to about **220,000 people over three
+  years**, starting with those with a BMI above 40 and at least four related
+  conditions. Access is uneven: by one BMJ analysis, fewer than half of
+  commissioning bodies had started prescribing.
+- An estimated **1.5 million or more** people use weight-loss drugs, around
+  nine in ten paying privately (estimates vary)
+  ([UK reporting](https://earlsdonpharmacy.co.uk/weight-loss-injections-nhs/)).
+- Lilly raised the UK private list price of Mounjaro by up to **170%** from
+  September 2025, which may reduce persistence among private users
+  ([PharmExec](https://www.pharmexec.com/view/eli-lilly-170-percent-price-increase-mounjaro-uk)).
+
+**Protection:** Swiss Re projects a 1.8%–5.1% mortality reduction and RGA
+2.0% (central): smaller than the US because obesity is lower (around 30% of
+adults) and NHS access is restricted.
+
+**Longevity:** this is where the UK stands out. With one of the largest bulk
+annuity markets in the world, small changes in improvement assumptions move
+billions. Yet a Standard Life survey found that **69% of defined benefit
+trustees had not yet considered** the effect of these drugs on life
+expectancy
+([Standard Life](https://www.standardlifeplc.com/news-and-views/press-releases/article-page/health-innovations-may-trigger-longevity-challenge)).
+The CMI_2025 projections model (March 2026) has no separate GLP-1 component;
+users can express their views through parameters such as the long-term rate
+of improvement
+([IFoA](https://actuaries.org.uk/news/cmi-publishes-cmi_2025-mortality-projections-model/)).
+
+## Protection versus longevity: an illustration
+
+How big are these effects for actual products? Here is a simple illustration
+in the spirit of my
+[previous post on mortality improvement](../mortality-improvement-lee-carter/index.qmd).
+I take England & Wales male death rates as a base table and apply a GLP-1
+mortality reduction that phases in linearly from 2027 to 2045 and stays
+constant after that. I then compare, against no GLP-1 effect:
+
+- **Protection:** the expected cost of a 20-year term life policy sold to a
+  45-year-old (pays 1 on death, 3% interest).
+- **Longevity:** the value of a life annuity of 1 per year for a 65-year-old
+  (3% interest, to age 100).
+
+I test two age patterns: a **uniform** reduction at all ages, and a
+**tapered** one closer to the evidence (full effect below 60, reducing to 30%
+of the effect at 85 and above).
+
+```{r}
+#| label: illustration
+library(StMoMo)
+
+ages <- 45:100
+base <- (EWMaleData$Dxt / EWMaleData$Ext)[as.character(ages), "2011"]
+
+# Share of the headline reduction applying at each age
+taper <- pmin(1, pmax(0.3, 1 - 0.7 * (ages - 60) / 25))
+names(taper) <- ages
+
+# Death rate at age x in projection year k (k = 1 is 2027, k = 19 is 2045)
+rate <- function(x, k, r, tapered) {
+  w <- if (tapered) taper[as.character(x)] else 1
+  base[as.character(x)] * (1 - r * w * min(k / 19, 1))
+}
+
+term_cost <- function(r, tapered = FALSE, age0 = 45, n = 20, i = 0.03) {
+  q  <- sapply(0:(n - 1), function(k) 1 - exp(-rate(age0 + k, k + 1, r, tapered)))
+  kp <- c(1, cumprod(1 - q))[1:n]          # survival to start of each year
+  sum(kp * q * (1 + i)^-(1:n))
+}
+
+annuity <- function(r, tapered = FALSE, age0 = 65, i = 0.03) {
+  n  <- 100 - age0 + 1
+  q  <- sapply(0:(n - 1), function(k) 1 - exp(-rate(age0 + k, k + 1, r, tapered)))
+  sum(cumprod(1 - q) * (1 + i)^-(1:n))
+}
+
+scenarios <- tibble(
+  Scenario = c("RGA pessimistic (US)", "RGA central (US)",
+               "Swiss Re optimistic (US)", "RGA optimistic (US)"),
+  r = c(0.010, 0.035, 0.064, 0.088)
+)
+
+results <- scenarios |>
+  rowwise() |>
+  mutate(
+    term_u = term_cost(r) / term_cost(0) - 1,
+    ann_u  = annuity(r) / annuity(0) - 1,
+    ann_t  = annuity(r, TRUE) / annuity(0, TRUE) - 1
+  ) |>
+  ungroup()
+
+pct <- function(x) sprintf("%+.1f%%", 100 * x)
+results |>
+  transmute(
+    Scenario,
+    `Mortality reduction by 2045` = sprintf("%.1f%%", 100 * r),
+    `20-year term cost, age 45` = pct(term_u),
+    `Annuity value, age 65 (uniform)` = pct(ann_u),
+    `Annuity value, age 65 (tapered)` = pct(ann_t)
+  ) |>
+  knitr::kable(align = "lcccc")
+```
+
+A few takeaways:
+
+- **The effects look small, but they are not.** In the central scenario, the
+  term policy becomes about
+  `r sprintf("%.1f%%", -100 * results$term_u[2])` cheaper, and the annuity
+  about `r sprintf("%.1f%%", 100 * results$ann_t[2])` more expensive with the
+  tapered age pattern. On a large in-force annuity book, a fraction of a
+  percent of reserves is a material amount of capital.
+- **Protection captures only part of the benefit.** A policy sold today runs
+  mostly during the phase-in years, before the full effect is reached.
+- **The age pattern matters a lot for annuities.** With the tapered pattern,
+  the annuity impact is roughly
+  `r sprintf("%.0f%%", 100 * (1 - results$ann_t[2] / results$ann_u[2]))`
+  smaller than with a uniform reduction, because annuity cash flows sit at the
+  ages where the evidence for benefit is weakest.
+- **Insured lives would see less.** These figures use population-level
+  reductions; RGA and Munich Re both expect smaller effects for insured lives.
+
+This is deliberately simple: one base table, no background improvement, and
+the reinsurers' population-level figures applied directly. But it shows the
+asymmetry clearly.
+
+## Implications for underwriting
+
+GLP-1s also change **who** buys insurance, and **how** they look at
+underwriting:
+
+- **Anti-selection risk.** An applicant who has recently lost weight on a
+  GLP-1 may qualify for a better rating class, then stop treatment and regain
+  the weight. Given the persistence data, this is a real concern.
+- **Accelerated underwriting** relies on self-reported height and weight and
+  may misclassify recent GLP-1 users more often than full underwriting
+  ([Celent](https://www.celent.com/insights/weightloss)).
+- **Better data helps.** Prescription histories and electronic health records
+  can show when treatment started and whether it continued (Munich Re).
+  Underwriters increasingly look at weight *before* treatment and at
+  treatment duration, not just current BMI.
+- **Expanding insurability.** For applicants who stay on treatment, improved
+  blood pressure, glucose and lipid profiles are real risk reductions. Some
+  previously declined or rated applicants may become insurable.
+- **Fraud.** With pills and online prescribing, insurers will need to verify
+  that disclosed treatment is genuine
+  ([Insurance Business](https://www.insurancebusinessmag.com/uk/news/life-insurance/foundayo-launch-puts-glp1-pill-fraud-risk-on-brokers-radar-587134.aspx)).
+
+## What to watch next
+
+- **Persistence in newer cohorts**, as prices fall and pills become available.
+- **Canada's generic market**: the first real test of what cheap,
+  widely available semaglutide does to uptake.
+- **Medicare uptake**: how many over-65s start treatment, which matters most
+  for longevity risk.
+- **Next-generation drugs**: Lilly plans to submit retatrutide for approval
+  in the first quarter of 2027.
+- **Insured experience studies**: cause-of-death trends in insured
+  portfolios, split by age, will be the clearest signal for pricing and
+  reserving.
+
+## My take
+
+The evidence that GLP-1 drugs reduce mortality in high-risk groups is now
+strong: two randomised trials show about a 20% reduction in all-cause death,
+and real-world data point in the same direction. What is **not** yet known is
+how much of that benefit survives real-world persistence, and how it spreads
+across a whole population over 20 years.
+
+For **protection** business, this is an upside to monitor rather than to
+price in early, with the bigger near-term issue being underwriting. For
+**longevity** business, it is a risk that deserves explicit scenario testing
+now, especially in the UK, where the stakes are large and many pension
+trustees have not yet considered it. As RGA put it, it may be too early to
+make material changes to trend assumptions, but the direction of travel is
+clear.
+
+## References
+
+- Swiss Re (September 2025). [GLP-1 drugs may reduce mortality by up to 6.4% in the US by 2045](https://www.swissre.com/press-release/GLP-1-drugs-may-reduce-mortality-by-up-to-6-4-in-the-US-by-2045/3f8ec083-2b76-4eea-88cb-e5af644e045d).
+- RGA (November 2025). [RGA GLP-1 Study: Weighing the Evidence](https://www.rgare.com/knowledge-center/article/rga-glp-1-study--weighing-the-evidence).
+- Munich Re (February 2026). [GLP-1 therapies and mortality risk: implications for life insurers](https://www.munichre.com/us-life/en/insights/clinical-knowledge/glp-1-therapies-and-mortality-risk-implications-for-life-insurers.html).
+- Lincoff, A. M., et al. (2023). Semaglutide and cardiovascular outcomes in obesity without diabetes. *New England Journal of Medicine*, 389, 2221–2232.
+- Perkovic, V., et al. (2024). Effects of semaglutide on chronic kidney disease in patients with type 2 diabetes (FLOW). *New England Journal of Medicine*, 391, 109–121.
+- Wilding, J. P. H., et al. (2022). [Weight regain and cardiometabolic effects after withdrawal of semaglutide: the STEP 1 trial extension](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC9542252/). *Diabetes, Obesity and Metabolism*, 24(8), 1553–1564.
+- Gallup (2026). [In U.S., GLP-1 usage reaches new high](https://news.gallup.com/poll/712157/glp-usage-reaches-new-high.aspx).
+- Society of Actuaries (2026). [Weight Loss Drugs and Insurance: Actuarial Model and Mindset Implications of the GLP-1 Era](https://www.soa.org/globalassets/assets/files/resources/research-report/2026/ml295-essay-collection/ml295-weightlossdrugs.pdf) (essay collection).

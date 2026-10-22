@@ -1,0 +1,57 @@
+---
+title: "Frederic OKE-AGBO"
+subtitle: "Actuarial Science · Machine Learning · Data Science"
+image: images/FO.jpg
+toc: false
+about:
+  template: trestles
+  image-shape: round
+  image-width: 14em
+  links:
+    - icon: github
+      text: GitHub
+      href: https://github.com/Ouo15
+    - icon: linkedin
+      text: LinkedIn
+      href: https://www.linkedin.com/in/frederic-oke-agbo-ms-mph-asa-289ba434
+    - icon: envelope
+      text: Email
+      href: "mailto:fredook15@gmail.com"
+---
+
+Hi! I'm Frederic, an Associate Actuary at [SCOR](https://www.scor.com) based in
+Atlanta, Georgia. I work on biometric risks: I help quantify mortality,
+longevity and policyholder behavior risks for life insurance and reinsurance.
+My day-to-day work combines advanced statistical modeling with data and
+actuarial judgment to support product development, pricing and portfolio
+management.
+
+I took a non-linear path into actuarial science. I started out in statistics,
+then spent six years as Biostatistician at the Ministry of Health in
+Benin. There I designed research studies and used survival, regression and mixed
+models to extract evidences to inform policies on health system. That experience taught me to
+think hard about how data is generated before trusting what it says, and I
+still bring that mindset to every model I build.
+
+Today I build solutions with R, Python and AI tools, and I keep learning about
+machine learning, deep learning and generative AI. This site is where I share
+what I learn, through tutorials, notes and experiments, so that peers can
+learn it a little faster.
+
+## Interests
+
+- **Biometric risk modeling**: mortality, longevity and policyholder behavior risks assessment and management
+- **Predictive modeling & machine learning**: regularization, ensembles, deep learning.
+- **Generative AI**: building LLM-powered tools and workflows to integrate AI into actuarial expertise.
+- **Biostatistics**: interested in methods that can be transferred from biostatistics to use for solving  actuarial science problems.
+- **Teaching**: Love to share knowledge and mentor others in actuarial science, data science and machine learning.
+
+## Education
+
+**MS, Actuarial Science** · University of Iowa · 2018 – 2020
+
+**MPH, Public Health Methodology** · Université libre de Bruxelles · 2014 – 2015
+
+**BS, Mathematics & Statistics** · Université d'Abomey-Calavi
+
+**Associate of the Society of Actuaries (ASA)** · Society of Actuaries

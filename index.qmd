@@ -1,0 +1,48 @@
+---
+pagetitle: "Frederic OKE-AGBO"
+toc: false
+page-layout: full
+listing:
+  id: featured
+  contents: posts
+  sort: "date desc"
+  type: grid
+  max-items: 3
+  categories: false
+  fields: [image, date, title, description, categories]
+  image-height: 180px
+---
+
+::: {.hero}
+![](images/FO.jpg){fig-alt="Frederic OKE-AGBO"}
+
+::: {.hero-text}
+# Hi, I'm Frederic OKE-AGBO.
+
+I'm an actuary at SCOR, where I model mortality, longevity and policyholder
+behavior risks. My path runs from statistics through public health to
+actuarial science and machine learning. Here I share what I learn along the
+way, through tutorials, notes and experiments for peers who want to learn
+it faster.
+
+```{=html}
+<div class="hero-buttons">
+  <a href="blog.html">Read the blog</a>
+  <a href="about.html">About me</a>
+  <a href="projects.html">Projects</a>
+  <a href="cv.html">My CV</a>
+</div>
+```
+:::
+:::
+
+::: {.section-title}
+Latest blog posts
+:::
+
+::: {.section-subtitle}
+Fresh notes and tutorials. [See all posts →](blog.qmd)
+:::
+
+::: {#featured}
+:::

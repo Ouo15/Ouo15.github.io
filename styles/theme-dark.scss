@@ -1,0 +1,16 @@
+/*-- scss:defaults --*/
+$primary:   #6cb6ec;
+$body-bg:   #111827;
+$body-color:#e5e7eb;
+$link-color:$primary;
+$navbar-bg: #1f2937;
+$navbar-fg: #e5e7eb;
+$navbar-hl: $primary;
+$footer-bg: #1f2937;
+
+/*-- scss:rules --*/
+.hero { background: #1f2937; }
+.hero-buttons a:first-child,
+.hero-buttons a:hover { color: #111827; }
+.section-subtitle, .cv-entry .cv-meta { color: #9ca3af; }
+.quarto-grid-item.card { box-shadow: 0 8px 24px rgba(0,0,0,.4); }

@@ -1,0 +1,45 @@
+---
+title: "Welcome to my blog"
+description: "Why I started this blog, and a small demo of what a post can contain: code, plots and math."
+date: "2024-01-17"
+categories: [News, Python]
+image: thumbnail.png
+jupyter: python3
+---
+
+Welcome! This is the first post on my blog, where I'll share what I learn about
+machine learning and data science.
+
+## Math
+
+Posts can contain LaTeX. For example, the mean squared error is
+
+$$
+\text{MSE} = \frac{1}{n}\sum_{i=1}^{n} \left(y_i - \hat{y}_i\right)^2 .
+$$
+
+## Code and plots
+
+Code runs when the post is rendered on my machine, and the result is saved
+("frozen") so GitHub only needs to publish it.
+
+```{python}
+#| label: fig-sine
+#| fig-cap: "A noisy sine wave with a fitted curve."
+import numpy as np
+import matplotlib.pyplot as plt
+
+rng = np.random.default_rng(0)
+x = np.linspace(0, 2 * np.pi, 60)
+y = np.sin(x) + rng.normal(0, 0.2, x.size)
+coef = np.polyfit(x, y, 5)
+
+fig, ax = plt.subplots(figsize=(7, 4))
+ax.scatter(x, y, color="#9ca3af", label="data")
+ax.plot(x, np.polyval(coef, x), color="#06436e", lw=3, label="degree-5 fit")
+ax.legend(); ax.spines[["top", "right"]].set_visible(False)
+fig.savefig("thumbnail.png", dpi=100, bbox_inches="tight")
+plt.show()
+```
+
+Stay tuned for more posts!

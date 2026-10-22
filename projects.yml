@@ -1,0 +1,6 @@
+# Add one entry per project. `path` can be a GitHub repo, a demo, or a blog post.
+- title: "Example project"
+  description: "Short description of what the project does and what you learned."
+  path: https://github.com/Ouo15
+  image: images/profile.svg
+  categories: [Machine Learning, Python]
