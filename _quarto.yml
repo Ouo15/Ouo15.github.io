@@ -37,7 +37,7 @@ website:
         aria-label: RSS feed
   page-footer:
     left: "© 2026 Frederic OKE-AGBO"
-    right: "Built with [Quarto](https://quarto.org)"
+    right: "Built with [Quarto](https://quarto.org) · Cookie-free analytics by [GoatCounter](https://www.goatcounter.com)"
 
 format:
   html:
@@ -48,6 +48,8 @@ format:
     code-copy: true
     highlight-style: github
     html-math-method: katex
+    link-external-newwindow: true
+    include-after-body: _analytics.html
 
 execute:
   freeze: auto

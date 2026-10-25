@@ -1,0 +1,44 @@
+<!-- GoatCounter: privacy-friendly analytics, no cookies. Dashboard: https://fredook15.goatcounter.com -->
+<script data-goatcounter="https://fredook15.goatcounter.com/count"
+        async src="https://gc.zgo.at/count.js"></script>
+<script>
+(function () {
+  // Send a custom event; does nothing until count.js has loaded (and on localhost)
+  function track(path, title) {
+    if (window.goatcounter && window.goatcounter.count) {
+      window.goatcounter.count({ path: path, title: title || path, event: true });
+    }
+  }
+
+  // Clicks: file downloads, email, and links to other sites
+  document.addEventListener("click", function (e) {
+    var a = e.target.closest && e.target.closest("a[href]");
+    if (!a) return;
+    var url;
+    try { url = new URL(a.href, location.href); } catch (err) { return; }
+    var label = (a.textContent || "").trim().slice(0, 80);
+
+    if (url.protocol === "mailto:") {
+      track("contact/email", "Email link");
+    } else if (url.host === location.host && /\.(pdf|csv|zip|xlsx?)$/i.test(url.pathname)) {
+      track("download" + url.pathname, label || url.pathname);
+    } else if (url.host && url.host !== location.host) {
+      track("outbound/" + url.host + url.pathname.replace(/\/$/, ""), label || url.host);
+    }
+  }, true);
+
+  // Reads: visitor scrolled through 75% of a blog post (once per page view)
+  if (location.pathname.indexOf("/posts/") !== -1) {
+    var sent = false;
+    window.addEventListener("scroll", function () {
+      if (sent) return;
+      var doc = document.documentElement;
+      var seen = (window.scrollY + window.innerHeight) / doc.scrollHeight;
+      if (seen >= 0.75) {
+        sent = true;
+        track("read" + location.pathname, "Read 75%: " + document.title);
+      }
+    }, { passive: true });
+  }
+})();
+</script>

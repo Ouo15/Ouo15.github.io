@@ -4,7 +4,7 @@ subtitle: "Actuary · Biometric Risk Modeling · Experience Analysis"
 toc: true
 ---
 
-[Download PDF](files/cv.pdf){.btn .btn-primary}
+[Download PDF](files/cv.pdf){.btn .btn-primary target="_blank"}
 
 Associate of the Society of Actuaries (ASA) with 5+ years of experience in
 mortality experience studies, assumption development and biometric risk
