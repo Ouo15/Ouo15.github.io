@@ -1,6 +1,6 @@
 # Add one entry per project. `path` can be a GitHub repo, a demo, or a blog post.
-- title: "Example project"
-  description: "Short description of what the project does and what you learned."
-  path: https://github.com/Ouo15
-  image: images/profile.svg
-  categories: [Machine Learning, Python]
+- title: "VM-22 Valuation Agent"
+  description: "Agentic AI for principle-based reserving of non-variable annuities: a tested actuarial engine (SERT, deterministic and stochastic reserves, floors, sensitivities), Valuation Manual citations, and drafted VM-31 and stakeholder reports. Python, Claude API, Streamlit."
+  path: https://github.com/Ouo15/vm22-agent
+  image: posts/vm22-valuation-agent/thumbnail.png
+  categories: [Actuarial Science, AI Agents, Python]

@@ -1,0 +1,228 @@
+---
+title: "Building an Agentic AI for VM-22 Valuation: Let the Model Orchestrate, Not Calculate"
+description: "How I built an AI agent that runs a principle-based reserve valuation for non-variable annuities, cites the Valuation Manual and drafts VM-31 and stakeholder reports, without ever letting the language model compute a reserve."
+date: "2026-10-25"
+categories: [Actuarial Science, AI Agents, VM-22, Python]
+image: thumbnail.png
+jupyter: python3
+execute:
+  echo: false
+  warning: false
+---
+
+::: {.callout-note appearance="simple"}
+**Note.** This is a personal, educational project built on synthetic data. It is not a
+compliant VM-22 valuation, and the views here are my own, not my employer's.
+The code is on GitHub: [Ouo15/vm22-agent](https://github.com/Ouo15/vm22-agent).
+:::
+
+VM-22, the NAIC's principle-based reserving (PBR) framework for non-variable annuities,
+applies to new business from 2026, with a three-year transition before it becomes mandatory
+in 2029 ([Milliman](https://www.milliman.com/en/insight/vm-22-readiness-key-consideration)).
+For fixed and payout annuity writers, that means stochastic exclusion tests, deterministic
+and stochastic reserves, prudent-estimate assumptions with margins, and a full VM-31 report
+documenting all of it.
+
+Much of that work is orchestration and documentation around a calculation engine, which is
+exactly where agentic AI can help. So I built one: a **VM-22 valuation agent** that runs the
+valuation, answers regulatory questions from the Valuation Manual's text, checks inputs and
+assumptions, and drafts both the technical report and a summary for executives.
+
+This post covers the design choices that matter most when you put a language model anywhere
+near a reserve number.
+
+## The design principle: the model never computes a reserve
+
+A language model can explain a CTE, but it shouldn't calculate one. Actuarial numbers need
+to be exact, reproducible and auditable, so the project has two clearly separated layers:
+
+- A **deterministic actuarial engine** in Python, covered by unit tests, which does every
+  calculation.
+- An **agent** (Claude, via the Anthropic API) that decides which calculations to run,
+  interprets the results, grounds regulatory statements in the manual, and writes.
+
+```{mermaid}
+flowchart LR
+  U[Actuary] --> A[Streamlit app]
+  A --> G[Agent: Claude]
+  G -->|tool calls| T[10 tools]
+  T --> E[Actuarial engine<br/>SERT · DR · SR · floor · sensitivities]
+  T --> V[Valuation Manual search<br/>chapter + page citations]
+  T --> C[Data and assumption checks]
+  T --> R[Report drafts<br/>VM-31 · stakeholder summary]
+  E --> T
+```
+
+The agent works only through tools. Each one wraps a tested function and returns structured
+results:
+
+| Tool | Purpose |
+|---|---|
+| `validate_inputs`, `review_assumptions` | Data checks; margins, bounds and unverified parameters |
+| `run_sert` | Stochastic Exclusion Ratio Test by reserving category |
+| `run_valuation` | Deterministic Reserve, Stochastic Reserve (CTE), floor, reported reserve |
+| `run_sensitivity` | One-assumption shocks: mortality, lapse, rates, spreads, expenses |
+| `search_valuation_manual` | Passages from the NAIC Valuation Manual with chapter and page |
+| `confirm_regulatory_parameter` | Marks a parameter as verified, only with a citation |
+| `save_report` | Saves the VM-31 draft or the stakeholder summary |
+
+## The engine
+
+The engine values a synthetic block of **1,000 single-premium deferred fixed annuities**
+(7-year surrender charge, guaranteed minimum rates, dynamic lapses) and **400 payout
+annuities** (life-contingent, some with a certain period).
+
+For each economic scenario, it projects annual liability cash flows $CF_t$ and discounts
+them at the scenario's net earned rate. The **scenario reserve** is the starting asset amount
+needed so that the portfolio never runs out, which is the greatest cumulative present value
+of the cash flows:
+
+$$
+\text{Reserve}_s = \max_{t} \sum_{k=1}^{t} CF_{s,k} \prod_{j=1}^{k} \frac{1}{1 + i_{s,j}}
+$$
+
+From there:
+
+- The **Deterministic Reserve (DR)** is the scenario reserve on the baseline rate path.
+- The **Stochastic Reserve (SR)** is the conditional tail expectation of scenario reserves
+  over 1,000 stochastic paths: the average of the worst 30% at CTE 70.
+- The **SERT** compares reserves under eight rate-stress scenarios with the baseline. A
+  category that fails needs the Stochastic Reserve.
+- The **reported reserve** is the modeled reserve, subject to a cash-surrender-value floor
+  for deferred annuities.
+
+A full 1,000-scenario valuation runs in about 1.3 seconds, which matters when an agent may
+call it several times in one conversation.
+
+## What the synthetic block shows
+
+```{python}
+import sys
+from pathlib import Path
+
+import matplotlib.pyplot as plt
+import numpy as np
+import yaml
+from IPython.display import Markdown
+
+ENGINE = Path("../../../vm22-agent").resolve()
+sys.path.insert(0, str(ENGINE))
+from vm22 import data, reserves
+
+a = yaml.safe_load((ENGINE / "config/assumptions.yaml").read_text())
+reg = yaml.safe_load((ENGINE / "config/regulatory_parameters.yaml").read_text())
+portfolio = {"deferred": data.synthetic_deferred(), "payout": data.synthetic_payout()}
+run = reserves.run_valuation(portfolio, a, reg)
+res, sert = run["results"], run["sert"]
+
+def m(x):
+    return f"${x / 1e6:,.1f}M"
+
+rows = []
+for cat in ("deferred", "payout"):
+    r = res[cat]
+    rows.append([cat.title(), f"{sert[cat]['ratio']:.1%}", sert[cat]["worst_scenario"].replace("_", " "),
+                 m(r["deterministic_reserve"]), m(r["stochastic_reserve"]), m(r["floor"]) if r["floor"] else "–",
+                 f"**{m(r['reported_reserve'])}**"])
+rows.append(["**Total**", "", "", m(res["total"]["deterministic_reserve"]), m(res["total"]["stochastic_reserve"]),
+             m(res["total"]["floor"]), f"**{m(res['total']['reported_reserve'])}**"])
+header = ["Category", "SERT ratio", "Worst stress", "DR", "SR (CTE 70)", "Floor", "Reported"]
+lines = ["| " + " | ".join(header) + " |", "|" + "---|" * len(header)]
+lines += ["| " + " | ".join(r) + " |" for r in rows]
+Markdown("\n".join(lines))
+```
+
+Two results are worth a closer look, because they are the kind of findings the agent has
+to explain correctly:
+
+- **Deferred annuities: the floor binds.** The modeled reserve is below the cash surrender
+  value, so the floor sets the reported reserve. The worst SERT stress is a *rise* in rates:
+  competitors credit more, policyholders surrender, and assets must be sold to pay them.
+- **Payout annuities: the Stochastic Reserve applies.** They fail the exclusion test, and
+  the worst stress is a *fall* in rates. There's no surrender option, so the risk is
+  reinvesting at lower yields over a long payment stream.
+
+```{python}
+#| label: fig-distribution
+#| fig-cap: "Payout annuities: distribution of scenario reserves over 1,000 stochastic interest-rate paths, with the Deterministic Reserve and the CTE 70 Stochastic Reserve."
+blue, red, grey = "#06436e", "#b2182b", "#6b7280"
+p = res["payout"]
+x = np.array(p["scenario_reserves"]) / 1e6
+fig, ax = plt.subplots(figsize=(8, 4.2))
+ax.hist(x, bins=40, color=blue, alpha=0.8, edgecolor="white")
+for value, label, color in ((p["deterministic_reserve"], "DR", grey), (p["stochastic_reserve"], "SR (CTE 70)", red)):
+    ax.axvline(value / 1e6, color=color, linestyle="--", linewidth=2)
+    ax.text(value / 1e6, ax.get_ylim()[1] * 0.95, f" {label}\n {value / 1e6:.1f}M", color=color, va="top")
+ax.set_xlabel("Scenario reserve ($M)")
+ax.set_ylabel("Scenarios")
+ax.spines[["top", "right"]].set_visible(False)
+fig.savefig("thumbnail.png", dpi=100, bbox_inches="tight")
+plt.show()
+```
+
+## Guardrails that make the agent trustworthy
+
+The interesting part of an actuarial agent isn't the chat, it's the discipline around it.
+These are the rules I built in, both in code and in the agent's instructions.
+
+**1. Numbers only from tools.** Every reserve, ratio and sensitivity in a reply must come
+from a tool result in that conversation. If a figure isn't there, the agent says so and
+offers to run the tool, rather than estimating.
+
+**2. Regulatory claims are cited.** The NAIC Valuation Manual (loaded by the user as a PDF)
+is split into passages tagged with their chapter, such as VM-22 or VM-31, and page. The
+agent cites the passages it relies on. If the manual isn't loaded, or a search finds
+nothing, it has to say so. Background from the model's own knowledge must be labeled as
+unverified.
+
+**3. Unverified until proven.** This is the guardrail I like most. Every regulatory
+parameter (the CTE level, the SERT threshold, the number of scenarios, the floor basis)
+starts as **unverified** in a configuration file. The agent can mark one as verified only
+by calling a tool that *requires a citation* from the manual. Until then, the parameter is
+flagged in every result and report. In my experience, it's the parameters people assume
+they remember that end up wrong.
+
+**4. Validated tool inputs.** Every tool input is checked against its schema before the tool
+runs, and failures go back to the model as errors it can correct.
+
+**5. Tests on the actuarial core.** The engine's tests compare results with closed-form
+answers. For example, with mortality switched off, a payout annuity's reserve must equal an
+annuity-certain. The tests caught one real bug: the CTE averaged the worst **31** of 100
+scenarios instead of 30, because `100 * (1 - 0.70)` is `30.000000000000004` in
+floating-point arithmetic. It's exactly the kind of error that an LLM checking its own
+arithmetic would never notice.
+
+## Two reports, two audiences
+
+The same results feed two very different documents, and the agent drafts both:
+
+- A **VM-31-style technical draft** for the appointed actuary and regulators: data and
+  validation, assumptions and margins, methodology, results by reserving category,
+  sensitivities, and the limitations that need verification.
+- A **stakeholder summary** for executives: the bottom line first, what drives the reserve,
+  key risks in plain words, and the decisions needed.
+
+Both are labeled drafts for review by a qualified actuary, and both export to Word.
+
+## What it isn't, and what's next
+
+This is a learning project, and its simplifications are deliberate:
+
+- **Data:** the in-force block is synthetic.
+- **Economic scenarios:** a one-factor interest-rate model stands in for the NAIC's
+  prescribed Generator of Economic Scenarios.
+- **Mortality:** a synthetic table stands in for the prescribed tables.
+- **Methodology:** the asset modeling and the reserve methodology are simplified.
+
+Natural next steps would be the prescribed scenario files and mortality tables, more
+products such as fixed indexed annuities, and an evaluation set of regulatory questions
+with known answers to measure how accurately the agent cites.
+
+The broader lesson applies well beyond VM-22. **In actuarial work, the value of an AI
+agent comes from what it is *not* allowed to do**: compute numbers itself, cite text it
+hasn't retrieved, or treat a parameter as settled without evidence. Within those limits,
+it takes on the orchestration and documentation work that consumes so much of a
+valuation cycle.
+
+The full code, tests and setup instructions are on GitHub:
+**[github.com/Ouo15/vm22-agent](https://github.com/Ouo15/vm22-agent)**.
