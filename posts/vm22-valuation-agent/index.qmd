@@ -16,6 +16,13 @@ compliant VM-22 valuation, and the views here are my own, not my employer's.
 The code is on GitHub: [Ouo15/vm22-agent](https://github.com/Ouo15/vm22-agent).
 :::
 
+::: {.callout-tip appearance="simple"}
+**Try it yourself:** [vm22-agent.streamlit.app](https://vm22-agent.streamlit.app/).
+The Results tab runs valuations, the SERT and sensitivities with no setup. To chat with the
+agent, paste your own Anthropic API key. It stays in your browser session's memory and is
+never stored.
+:::
+
 VM-22, the NAIC's principle-based reserving (PBR) framework for non-variable annuities,
 applies to new business from 2026, with a three-year transition before it becomes mandatory
 in 2029 ([Milliman](https://www.milliman.com/en/insight/vm-22-readiness-key-consideration)).
@@ -224,5 +231,6 @@ hasn't retrieved, or treat a parameter as settled without evidence. Within those
 it takes on the orchestration and documentation work that consumes so much of a
 valuation cycle.
 
-The full code, tests and setup instructions are on GitHub:
+You can try the **[live demo](https://vm22-agent.streamlit.app/)**, and the full code
+(MIT licensed), tests and setup instructions are on GitHub:
 **[github.com/Ouo15/vm22-agent](https://github.com/Ouo15/vm22-agent)**.
